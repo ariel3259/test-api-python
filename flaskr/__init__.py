@@ -4,7 +4,7 @@ from flaskr.exceptions import HttpException
 from dotenv import load_dotenv, find_dotenv
 import os
 
-def create_app(test_config):
+def create_app(test_config = None):
     load_dotenv(find_dotenv(), override=True)
     app = Flask(__name__)
     app.config["SECRET"] = os.getenv("SECRET")

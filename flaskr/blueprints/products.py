@@ -9,7 +9,7 @@ products = [
     {"id": 3, "name": "Biscochos Don Saturn", "price": 898, "stock": 6, "is_available": True}
 ]
 
-@bp.get()
+@bp.get("")
 def get_products():
     global products
     tmp_p = products.copy()
@@ -20,7 +20,7 @@ def get_products():
         tmp_p[i].pop("is_available")
     return tmp_p, 200
 
-@bp.post()
+@bp.post("")
 @token_required
 def add_products():
     global products
