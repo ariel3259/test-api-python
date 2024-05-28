@@ -7,10 +7,10 @@ import os
 def create_app(test_config: (dict | None) = None)-> Flask:
     load_dotenv(find_dotenv(), override=True)
     app = Flask(__name__)
-    app.config["SECRET"] = os.getenv("SECRET")
     if test_config is not None:
         app.config.update(**test_config)
-
+    else:
+        app.config["SECRET"] = os.getenv("SECRET")
     @app.errorhandler(HttpException)
     def handle_http_exception(e: HttpException):
         return {"message": e.message}, e.status_code
