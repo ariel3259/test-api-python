@@ -4,6 +4,7 @@ from flaskr.exceptions import HttpException
 from regex import regex
 from flaskr.utils import encode_jwt, decode_jwt
 from functools import wraps
+from datetime import datetime
 
 password_strength_regex = regex.compile(r"^(?=.*[A-Z].*[A-Z])(?=.*[!@#$&*])(?=.*[0-9].*[0-9])(?=.*[a-z].*[a-z].*[a-z]).{8}$")
 email_regex = regex.compile(r"""(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])""")
@@ -14,26 +15,37 @@ users = [
         "user_id": 1,
         "email": "admin@admin.com",
         "password": generate_password_hash("admin")
+    },
+        {
+        "user_id": 2,
+        "email": "test@test.com",
+        "password": generate_password_hash("test")
     }
 ]
 
 def token_required(fn):
     @wraps(fn)
-    def token_wrap(**kwargs):
+    def token_wrap(*args, **kwargs):
         global users
-        auth: (str | None) = request.authorization.get()
-        if auth == None:
+
+        if "Authorization" not in request.headers:
             raise HttpException("Authorization token required", 401)
+        auth = request.headers["Authorization"]
         if auth[0:6].lower() == "bearer":
             auth = auth[7:]
         result = decode_jwt(auth)
         if result == None:
-            raise HttpException("Token expired or wrong signature", 401)
+            raise HttpException("Wrong signature", 401)
+        if datetime.now().timestamp().__ceil__() >= result["iat"]:
+            raise HttpException("Token expired", 401)
         email = result["email"]
         user_exits = [x for x in users if x["email"] == email]
         if len(user_exits) == 0:
             raise HttpException("The user does not exits", 401)
+        return fn(*args, **kwargs)
     return token_wrap
+
+
 @bp.post("/signup")
 def signup():
     global users

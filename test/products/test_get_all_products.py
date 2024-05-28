@@ -1,12 +1,10 @@
-import pytest
-import requests
-from test.products import base_url
+from flask.testing import FlaskClient
 
-def test_get_all_products():
-    response = requests.get(base_url)
-    rows = response.json()
-    row = rows[0]
+def test_get_all_products(client: FlaskClient):
+    response = client.get("/api/products")
+    
     assert response.status_code == 200
-    assert "name" in row
-    assert "price" in row
-    assert "stock" in row
+    assert len(response.json) > 0
+    assert "name" in response.json[0]
+    assert "price" in response.json[0]
+    assert "stock" in response.json[0]
